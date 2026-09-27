@@ -1,0 +1,11 @@
+# Copy these settings into your local gradle.properties.
+# Do NOT commit real passwords or private keystore paths.
+
+# Public HTTPS backend used by the Android app. The customer never sees this.
+nadeemApiBaseUrl=https://YOUR-BACKEND-DOMAIN.example
+
+# Optional production signing configuration.
+nadeemKeystorePath=C:/path/to/nadeem-mobile-lock.jks
+nadeemStorePassword=CHANGE_ME
+nadeemKeyAlias=nadeemmobile
+nadeemKeyPassword=CHANGE_ME
