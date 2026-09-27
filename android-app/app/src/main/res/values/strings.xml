@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Nadeem Mobile Lock</string>
+
+    <!-- Pairing screen -->
+    <string name="pairing_invalid_code">Enter the 6-digit pairing code.</string>
+    <string name="pairing_connecting">Connecting securely…</string>
+    <string name="pairing_success">Successfully connected to Nadeem Mobiles</string>
+    <string name="pairing_failed">Couldn't connect: %1$s</string>
+    <string name="pairing_not_device_owner">Setup isn't finished. Ask Nadeem Mobiles to complete device-owner setup first.</string>
+
+    <!-- Lock screen -->
+    <string name="locked_by_format">Locked by %1$s</string>
+    <string name="lock_default_message">Please contact the shop to continue using this phone.</string>
+    <string name="lock_call_button_format">Call %1$s</string>
+</resources>

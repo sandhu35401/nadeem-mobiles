@@ -1,0 +1,10 @@
+Replace this file with your real Firebase config.
+
+1. Go to https://console.firebase.google.com and create a project (free).
+2. Add an Android app inside it with package name: com.nadeemmobile.lock
+3. Download the "google-services.json" file it gives you.
+4. Put that real file at: android-app/app/google-services.json
+   (same folder as this placeholder — delete this .example file or just
+   make sure the real one is named exactly "google-services.json")
+
+Without this file, the app will not build.
