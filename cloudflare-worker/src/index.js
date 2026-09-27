@@ -136,7 +136,7 @@ async function handle(request, env) {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, "") || "/";
   if (request.method === "OPTIONS") return new Response(null, { status: 204 });
-  if (path === "/") return json({ ok: true, service: "nadeem-mobiles-api", version: "2.1.0" });
+  if (path === "/") return json({ ok: true, service: "nadeem-mobiles-api", version: "2.5.0" });
   if (path === "/api/health") return json({ ok: true, service: "nadeem-mobiles-api", time: new Date().toISOString() });
 
   if (path === "/api/login" && request.method === "POST") {
