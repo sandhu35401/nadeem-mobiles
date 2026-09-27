@@ -1,0 +1,21 @@
+# Node / secrets
+server/node_modules/
+server/.env
+server/firebase-service-account.json
+server/data/
+server/*.sqlite
+server/*.sqlite-shm
+server/*.sqlite-wal
+
+# Android local/build files
+android-app/.gradle/
+android-app/app/build/
+android-app/local.properties
+android-app/gradle.properties
+android-app/app/google-services.json
+
+# IDE / OS
+.idea/
+*.iml
+.DS_Store
+Thumbs.db

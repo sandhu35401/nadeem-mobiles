@@ -113,9 +113,19 @@ async function googleAccessToken(env) {
   fcmCache = { token: data.access_token, exp: now + Number(data.expires_in || 3600) };
   return data.access_token;
 }
+function firebaseProjectId(env) {
+  const configured = String(env.FCM_PROJECT_ID || "").trim();
+  if (configured && !configured.startsWith("REPLACE_")) return configured;
+  const email = String(env.FIREBASE_CLIENT_EMAIL || "").trim();
+  const m = email.match(/@([^@]+)\.iam\.gserviceaccount\.com$/);
+  return m ? m[1] : "";
+}
+
 async function sendFcm(env, tokenValue, data) {
+  const projectId = firebaseProjectId(env);
+  if (!projectId) throw new Error("Firebase project ID is not configured.");
   const accessToken = await googleAccessToken(env);
-  const response = await fetch(`https://fcm.googleapis.com/v1/projects/${env.FCM_PROJECT_ID}/messages:send`, {
+  const response = await fetch(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
     method: "POST",
     headers: { Authorization: `Bearer ${accessToken}`, "content-type": "application/json; charset=UTF-8" },
     body: JSON.stringify({ message: { token: tokenValue, data } })
