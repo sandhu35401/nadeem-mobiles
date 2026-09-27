@@ -1,0 +1,13 @@
+{
+  "name": "nadeem-mobiles-cloudflare-api",
+  "private": true,
+  "version": "2.1.0",
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev"
+  },
+  "devDependencies": {
+    "wrangler": "^4.36.0"
+  }
+}

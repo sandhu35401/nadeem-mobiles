@@ -1,0 +1,28 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "nadeem-mobiles-api",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-27",
+  "observability": { "enabled": true },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "nadeem-mobiles-db",
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID"
+    }
+  ],
+  "vars": {
+    "SHOP_NAME": "Nadeem Mobiles",
+    "SHOP_PHONE": "",
+    "CORS_ORIGINS": "https://sandhu35401.github.io",
+    "FCM_PROJECT_ID": "REPLACE_WITH_FIREBASE_PROJECT_ID"
+  },
+  "secrets": {
+    "required": [
+      "ADMIN_PASSWORD",
+      "JWT_SECRET",
+      "FIREBASE_CLIENT_EMAIL",
+      "FIREBASE_PRIVATE_KEY"
+    ]
+  }
+}
