@@ -24,14 +24,20 @@ function renderSettings(){const origin=location.origin;return `<div class="page-
 function modal(title,body){return `<div class="modal-backdrop" data-close-modal><div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><h3>${title}</h3><button class="ghost" data-close-modal>Close</button></div><div class="modal-body">${body}</div></div></div>`}
 function bindModalActions(){
   const host=$("modalHost");
-  host.querySelectorAll("[data-close-modal]").forEach(el=>el.addEventListener("click",closeModal));
+  // Only explicit close buttons close immediately. The backdrop closes only when
+  // the user clicks the backdrop itself. This prevents submit/action clicks from
+  // bubbling to the backdrop and destroying the form before submit fires.
+  host.querySelectorAll("button[data-close-modal]").forEach(el=>el.addEventListener("click",closeModal));
+  host.querySelectorAll(".modal-backdrop").forEach(el=>el.addEventListener("click",e=>{
+    if(e.target===el) closeModal();
+  }));
   const cf=$("customerForm");
   if(cf) cf.addEventListener("submit",createCustomer);
   const pf=$("paymentForm");
   if(pf) pf.addEventListener("submit",e=>submitPayment(e));
-  host.querySelectorAll("[data-lock]").forEach(el=>el.addEventListener("click",()=>deviceAction(el.dataset.lock,"lock")));
-  host.querySelectorAll("[data-unlock]").forEach(el=>el.addEventListener("click",()=>deviceAction(el.dataset.unlock,"unlock")));
-  host.querySelectorAll("[data-release]").forEach(el=>el.addEventListener("click",()=>releaseDevice(el.dataset.release)));
+  host.querySelectorAll("[data-lock]").forEach(el=>el.addEventListener("click",e=>{ e.stopPropagation(); deviceAction(el.dataset.lock,"lock"); }));
+  host.querySelectorAll("[data-unlock]").forEach(el=>el.addEventListener("click",e=>{ e.stopPropagation(); deviceAction(el.dataset.unlock,"unlock"); }));
+  host.querySelectorAll("[data-release]").forEach(el=>el.addEventListener("click",e=>{ e.stopPropagation(); releaseDevice(el.dataset.release); }));
 }
 function openModal(html){$("modalHost").innerHTML=html;bindModalActions()}
 function closeModal(){$("modalHost").innerHTML=""}
