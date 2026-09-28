@@ -22,24 +22,7 @@ function renderActivity(){return `<section class="card"><div class="card-head"><
 function renderActivityRow(a){const label=a.action.replaceAll("_"," ");return `<div class="activity"><div class="activity-dot"></div><div><strong>${esc(a.customer_name||"System")} — ${esc(label)}</strong><div class="detail">${esc(a.detail||"")}</div></div><time>${esc(date(a.at))}</time></div>`}
 function renderSettings(){const origin=location.origin;return `<div class="page-grid two-col"><section class="card"><div class="card-head"><h3>Shop settings</h3></div><div class="card-body settings-list"><div class="setting"><div><strong>Shop name</strong><span>Displayed in the app and dashboard</span></div><strong>Nadeem Mobiles</strong></div><div class="setting"><div><strong>Dashboard URL</strong><span>Current page origin</span></div><strong>${esc(origin)}</strong></div><div class="setting"><div><strong>Backend URL</strong><span>Configured in dashboard/config.js</span></div><strong>${esc(API||"Same origin / not configured")}</strong></div></div></section><section class="card"><div class="card-head"><h3>Release policy</h3></div><div class="card-body"><div class="notice">Enrolled phones keep Factory Reset blocked and Uninstall blocked until the shop sends Release. Remove is disabled while a device is still enrolled.</div><div class="notice" style="margin-top:10px">Release is acknowledged by the phone before the backend marks the enrollment as Released.</div></div></section></div>`}
 function modal(title,body){return `<div class="modal-backdrop" data-close-modal><div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><h3>${title}</h3><button class="ghost" data-close-modal>Close</button></div><div class="modal-body">${body}</div></div></div>`}
-function bindModalActions(){
-  const host=$("modalHost");
-  // Only explicit close buttons close immediately. The backdrop closes only when
-  // the user clicks the backdrop itself. This prevents submit/action clicks from
-  // bubbling to the backdrop and destroying the form before submit fires.
-  host.querySelectorAll("button[data-close-modal]").forEach(el=>el.addEventListener("click",closeModal));
-  host.querySelectorAll(".modal-backdrop").forEach(el=>el.addEventListener("click",e=>{
-    if(e.target===el) closeModal();
-  }));
-  const cf=$("customerForm");
-  if(cf) cf.addEventListener("submit",createCustomer);
-  const pf=$("paymentForm");
-  if(pf) pf.addEventListener("submit",e=>submitPayment(e));
-  host.querySelectorAll("[data-lock]").forEach(el=>el.addEventListener("click",e=>{ e.stopPropagation(); deviceAction(el.dataset.lock,"lock"); }));
-  host.querySelectorAll("[data-unlock]").forEach(el=>el.addEventListener("click",e=>{ e.stopPropagation(); deviceAction(el.dataset.unlock,"unlock"); }));
-  host.querySelectorAll("[data-release]").forEach(el=>el.addEventListener("click",e=>{ e.stopPropagation(); releaseDevice(el.dataset.release); }));
-}
-function openModal(html){$("modalHost").innerHTML=html;bindModalActions()}
+function openModal(html){$("modalHost").innerHTML=html}
 function closeModal(){$("modalHost").innerHTML=""}
 function customerForm(){return modal("New customer & enrollment",`<form id="customerForm" class="form-grid"><label>Customer name<input id="fName" required></label><label>Phone number<input id="fPhone" placeholder="03XX-XXXXXXX" required></label><label>Total sale amount<input id="fTotal" type="number" min="0" step="0.01" placeholder="0"></label><label>Installment amount<input id="fInstallment" type="number" min="0" step="0.01" placeholder="0"></label><label>Next due date<input id="fDue" type="date"></label><label>Notes<input id="fNotes" placeholder="Optional notes"></label><div class="span2 notice">After creation, the dashboard generates a one-time 6-digit pairing code. The customer app only asks for that code.</div><div class="span2 modal-actions"><button type="button" class="ghost" data-close-modal>Cancel</button><button class="primary" type="submit">Create & show code</button></div></form>`)}
 function codeModal(c){return modal("Pairing code",`<div class="notice">Give this code to the customer. It is entered only in the Nadeem Mobiles app. No server address is entered on the phone.</div><div class="code-box"><div class="code">${esc(c.pairingCode)}</div><div class="muted" style="margin-top:6px">${esc(c.name)}</div></div><div class="modal-actions"><button class="primary" data-close-modal>Done</button></div>`)}
@@ -61,7 +44,6 @@ function bindViewActions(){
   $("content").querySelectorAll("[data-reenroll]").forEach(el=>el.addEventListener("click",()=>reEnroll(el.dataset.reenroll)));
   $("content").querySelectorAll("[data-code]").forEach(el=>el.addEventListener("click",async()=>{try{const c=customers.find(x=>String(x.id)===el.dataset.code);openModal(codeModal({name:c.name,pairingCode:c.pairing_code}))}catch(e){toast(e.message,'bad')}}));
   $("content").querySelectorAll("[data-delpay]").forEach(el=>el.addEventListener("click",()=>deletePayment(el.dataset.delpay)));
-  const cf=$("customerForm");if(cf)cf.addEventListener("submit",createCustomer);const pf=$("paymentForm");if(pf)pf.addEventListener("submit",e=>submitPayment(e));
 }
 async function createCustomer(e){e.preventDefault();try{const customerName=$('fName').value.trim();const d=await api('/api/customers',{method:'POST',body:JSON.stringify({name:customerName,phoneNumber:$('fPhone').value.trim(),totalAmount:$('fTotal').value,installmentAmount:$('fInstallment').value,nextDueDate:$('fDue').value,notes:$('fNotes').value.trim()})});closeModal();toast('Customer created','good');openModal(codeModal({name:customerName,pairingCode:d.pairingCode}));await loadAll()}catch(e){toast(e.message,'bad')}}
 async function submitPayment(e){e.preventDefault();try{const c=customers.find(x=>String(x.id)===e.currentTarget.dataset.customerId);if(!c)throw new Error('Customer not found.');await api(`/api/payments/customer/${c.id}`,{method:'POST',body:JSON.stringify({amount:$('pAmount').value,reference:$('pRef').value.trim(),note:$('pNote').value.trim()})});closeModal();toast('Payment saved','good');await loadAll()}catch(e){toast(e.message,'bad')}}
@@ -74,5 +56,17 @@ $("loginForm").addEventListener("submit",async e=>{e.preventDefault();$("loginEr
 $("logoutBtn").addEventListener("click",logout);$("refreshBtn").addEventListener("click",loadAll);$("addCustomerBtn").addEventListener("click",()=>openModal(customerForm()));document.querySelectorAll('#nav .nav-item').forEach(b=>b.addEventListener('click',()=>{currentView=b.dataset.view;render()}));
 if(token){$("loginView").classList.add('hidden');$("appView").classList.remove('hidden');loadAll()} 
 
-$("modalHost").addEventListener("click",e=>{if(e.target.matches("[data-close-modal]"))closeModal()});
+$("modalHost").addEventListener("submit",e=>{
+  if(e.target?.id==="customerForm"){e.preventDefault();createCustomer(e);return}
+  if(e.target?.id==="paymentForm"){e.preventDefault();submitPayment(e);return}
+});
+$("modalHost").addEventListener("click",e=>{
+  const close=e.target.closest("[data-close-modal]");
+  if(close){e.preventDefault();closeModal();return}
+  const backdrop=e.target.classList?.contains("modal-backdrop");
+  if(backdrop){closeModal();return}
+  const lock=e.target.closest("[data-lock]"); if(lock){e.preventDefault();deviceAction(lock.dataset.lock,"lock");return}
+  const unlock=e.target.closest("[data-unlock]"); if(unlock){e.preventDefault();deviceAction(unlock.dataset.unlock,"unlock");return}
+  const release=e.target.closest("[data-release]"); if(release){e.preventDefault();releaseDevice(release.dataset.release);return}
+});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
