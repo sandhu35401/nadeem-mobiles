@@ -21,8 +21,8 @@ function renderEnrollments(){return `<div class="toolbar"><div>Enrollment lifecy
 function renderActivity(){return `<section class="card"><div class="card-head"><h3>Event history</h3><span class="muted">Latest 150 events</span></div><div class="activity-list">${activity.length?activity.map(renderActivityRow).join(""):`<div class="empty">No activity yet.</div>`}</div></section>`}
 function renderActivityRow(a){const label=a.action.replaceAll("_"," ");return `<div class="activity"><div class="activity-dot"></div><div><strong>${esc(a.customer_name||"System")} — ${esc(label)}</strong><div class="detail">${esc(a.detail||"")}</div></div><time>${esc(date(a.at))}</time></div>`}
 function renderSettings(){const origin=location.origin;return `<div class="page-grid two-col"><section class="card"><div class="card-head"><h3>Shop settings</h3></div><div class="card-body settings-list"><div class="setting"><div><strong>Shop name</strong><span>Displayed in the app and dashboard</span></div><strong>Nadeem Mobiles</strong></div><div class="setting"><div><strong>Dashboard URL</strong><span>Current page origin</span></div><strong>${esc(origin)}</strong></div><div class="setting"><div><strong>Backend URL</strong><span>Configured in dashboard/config.js</span></div><strong>${esc(API||"Same origin / not configured")}</strong></div></div></section><section class="card"><div class="card-head"><h3>Release policy</h3></div><div class="card-body"><div class="notice">Enrolled phones keep Factory Reset blocked and Uninstall blocked until the shop sends Release. Remove is disabled while a device is still enrolled.</div><div class="notice" style="margin-top:10px">Release is acknowledged by the phone before the backend marks the enrollment as Released.</div></div></section></div>`}
-function modal(title,body){return `<div class="modal-backdrop" data-close-modal><div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><h3>${title}</h3><button class="ghost" data-close-modal>Close</button></div><div class="modal-body">${body}</div></div></div>`}
-function openModal(html){$("modalHost").innerHTML=html}
+function modal(title,body){return `<div class="modal-backdrop"><div class="modal" role="dialog" aria-modal="true" tabindex="-1" onclick="event.stopPropagation()"><div class="modal-head"><h3>${title}</h3><button class="ghost" data-close-modal>Close</button></div><div class="modal-body">${body}</div></div></div>`}
+function openModal(html){$("modalHost").innerHTML=html;requestAnimationFrame(()=>{const first=$("modalHost").querySelector("input,textarea,select,button");if(first){first.focus();}})}
 function closeModal(){$("modalHost").innerHTML=""}
 function customerForm(){return modal("New customer & enrollment",`<form id="customerForm" class="form-grid"><label>Customer name<input id="fName" required></label><label>Phone number<input id="fPhone" placeholder="03XX-XXXXXXX" required></label><label>Total sale amount<input id="fTotal" type="number" min="0" step="0.01" placeholder="0"></label><label>Installment amount<input id="fInstallment" type="number" min="0" step="0.01" placeholder="0"></label><label>Next due date<input id="fDue" type="date"></label><label>Notes<input id="fNotes" placeholder="Optional notes"></label><div class="span2 notice">After creation, the dashboard generates a one-time 6-digit pairing code. The customer app only asks for that code.</div><div class="span2 modal-actions"><button type="button" class="ghost" data-close-modal>Cancel</button><button class="primary" type="submit">Create & show code</button></div></form>`)}
 function codeModal(c){return modal("Pairing code",`<div class="notice">Give this code to the customer. It is entered only in the Nadeem Mobiles app. No server address is entered on the phone.</div><div class="code-box"><div class="code">${esc(c.pairingCode)}</div><div class="muted" style="margin-top:6px">${esc(c.name)}</div></div><div class="modal-actions"><button class="primary" data-close-modal>Done</button></div>`)}
@@ -31,19 +31,22 @@ async function showCustomer(id){const c=customers.find(x=>Number(x.id)===Number(
 async function loadAll(){try{[stats,customers,payments,devices,enrollments,activity]=await Promise.all([api('/api/stats'),api('/api/customers'),api('/api/payments'),api('/api/devices'),api('/api/enrollments'),api('/api/activity')]);render();$("connectionLabel").textContent="Backend connected";$("connectionLabel").previousElementSibling.classList.add("ok");}catch(e){$("connectionLabel").textContent="Backend unavailable";if(e.message.toLowerCase().includes("session"))logout();else toast(e.message,'bad')}}
 function logout(){token=null;localStorage.removeItem("nm_token");$("appView").classList.add("hidden");$("loginView").classList.remove("hidden")}
 function bindViewActions(){
-  $("content").querySelectorAll("[data-view]").forEach(el=>el.addEventListener("click",()=>{currentView=el.dataset.view;render()}));
-  $("content").querySelectorAll("[data-open='customer']").forEach(el=>el.addEventListener("click",()=>openModal(customerForm())));
-  $("content").querySelectorAll("[data-close-modal]").forEach(el=>el.addEventListener("click",closeModal));
-  const s=$("customerSearch");if(s)s.addEventListener("input",()=>{const q=s.value.toLowerCase();document.querySelectorAll('#content tbody tr').forEach(r=>r.style.display=r.textContent.toLowerCase().includes(q)?'':'none')});
-  $("content").querySelectorAll("[data-edit]").forEach(el=>el.addEventListener("click",()=>showCustomer(el.dataset.edit)));
-  $("content").querySelectorAll("[data-pay]").forEach(el=>el.addEventListener("click",()=>{const c=customers.find(x=>String(x.id)===el.dataset.pay);if(c)openModal(paymentModal(c))}));
-  $("content").querySelectorAll("[data-lock]").forEach(el=>el.addEventListener("click",()=>deviceAction(el.dataset.lock,'lock')));
-  $("content").querySelectorAll("[data-unlock]").forEach(el=>el.addEventListener("click",()=>deviceAction(el.dataset.unlock,'unlock')));
-  $("content").querySelectorAll("[data-release]").forEach(el=>el.addEventListener("click",()=>releaseDevice(el.dataset.release)));
-  $("content").querySelectorAll("[data-remove]").forEach(el=>el.addEventListener("click",()=>removeCustomer(el.dataset.remove)));
-  $("content").querySelectorAll("[data-reenroll]").forEach(el=>el.addEventListener("click",()=>reEnroll(el.dataset.reenroll)));
-  $("content").querySelectorAll("[data-code]").forEach(el=>el.addEventListener("click",async()=>{try{const c=customers.find(x=>String(x.id)===el.dataset.code);openModal(codeModal({name:c.name,pairingCode:c.pairing_code}))}catch(e){toast(e.message,'bad')}}));
-  $("content").querySelectorAll("[data-delpay]").forEach(el=>el.addEventListener("click",()=>deletePayment(el.dataset.delpay)));
+  const content=$("content");
+  if(!content || content.dataset.bound==="1") return;
+  content.dataset.bound="1";
+  content.addEventListener("click",e=>{
+    const view=e.target.closest("[data-view]"); if(view && content.contains(view)){e.preventDefault();currentView=view.dataset.view;render();return}
+    const open=e.target.closest("[data-open=\"customer\"]"); if(open && content.contains(open)){e.preventDefault();openModal(customerForm());return}
+    const edit=e.target.closest("[data-edit]"); if(edit){e.preventDefault();showCustomer(edit.dataset.edit);return}
+    const pay=e.target.closest("[data-pay]"); if(pay){e.preventDefault();const c=customers.find(x=>String(x.id)===pay.dataset.pay);if(c)openModal(paymentModal(c));return}
+    const lock=e.target.closest("[data-lock]"); if(lock){e.preventDefault();deviceAction(lock.dataset.lock,"lock");return}
+    const unlock=e.target.closest("[data-unlock]"); if(unlock){e.preventDefault();deviceAction(unlock.dataset.unlock,"unlock");return}
+    const release=e.target.closest("[data-release]"); if(release){e.preventDefault();releaseDevice(release.dataset.release);return}
+    const remove=e.target.closest("[data-remove]"); if(remove){e.preventDefault();removeCustomer(remove.dataset.remove);return}
+    const reenroll=e.target.closest("[data-reenroll]"); if(reenroll){e.preventDefault();reEnroll(reenroll.dataset.reenroll);return}
+    const code=e.target.closest("[data-code]"); if(code){e.preventDefault();const c=customers.find(x=>String(x.id)===code.dataset.code);if(c)openModal(codeModal({name:c.name,pairingCode:c.pairing_code}));return}
+    const del=e.target.closest("[data-delpay]"); if(del){e.preventDefault();deletePayment(del.dataset.delpay);return}
+  });
 }
 async function createCustomer(e){e.preventDefault();try{const customerName=$('fName').value.trim();const d=await api('/api/customers',{method:'POST',body:JSON.stringify({name:customerName,phoneNumber:$('fPhone').value.trim(),totalAmount:$('fTotal').value,installmentAmount:$('fInstallment').value,nextDueDate:$('fDue').value,notes:$('fNotes').value.trim()})});closeModal();toast('Customer created','good');openModal(codeModal({name:customerName,pairingCode:d.pairingCode}));await loadAll()}catch(e){toast(e.message,'bad')}}
 async function submitPayment(e){e.preventDefault();try{const c=customers.find(x=>String(x.id)===e.currentTarget.dataset.customerId);if(!c)throw new Error('Customer not found.');await api(`/api/payments/customer/${c.id}`,{method:'POST',body:JSON.stringify({amount:$('pAmount').value,reference:$('pRef').value.trim(),note:$('pNote').value.trim()})});closeModal();toast('Payment saved','good');await loadAll()}catch(e){toast(e.message,'bad')}}
@@ -61,12 +64,12 @@ $("modalHost").addEventListener("submit",e=>{
   if(e.target?.id==="paymentForm"){e.preventDefault();submitPayment(e);return}
 });
 $("modalHost").addEventListener("click",e=>{
+  if(e.target.classList?.contains("modal-backdrop")){e.preventDefault();closeModal();return}
   const close=e.target.closest("[data-close-modal]");
   if(close){e.preventDefault();closeModal();return}
-  const backdrop=e.target.classList?.contains("modal-backdrop");
-  if(backdrop){closeModal();return}
   const lock=e.target.closest("[data-lock]"); if(lock){e.preventDefault();deviceAction(lock.dataset.lock,"lock");return}
   const unlock=e.target.closest("[data-unlock]"); if(unlock){e.preventDefault();deviceAction(unlock.dataset.unlock,"unlock");return}
   const release=e.target.closest("[data-release]"); if(release){e.preventDefault();releaseDevice(release.dataset.release);return}
 });
+
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
