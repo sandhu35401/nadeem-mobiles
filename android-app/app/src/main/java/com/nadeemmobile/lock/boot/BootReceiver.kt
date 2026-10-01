@@ -4,8 +4,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.nadeemmobile.lock.admin.PolicyManager
-import com.nadeemmobile.lock.store.Prefs.isLocked
 import com.nadeemmobile.lock.store.Prefs.customerId
+import com.nadeemmobile.lock.store.Prefs.isLocked
 import com.nadeemmobile.lock.ui.LockActivity
 
 class BootReceiver : BroadcastReceiver() {
@@ -15,6 +15,12 @@ class BootReceiver : BroadcastReceiver() {
         intent: Intent?
     ) {
         when (intent?.action) {
+            Intent.ACTION_LOCKED_BOOT_COMPLETED -> {
+                // Direct Boot can run before credential-protected storage is
+                // available. Re-apply kiosk restrictions now, then the normal
+                // USER_UNLOCKED path will restore the lock screen UI.
+                applyBootPolicy(context)
+            }
 
             Intent.ACTION_BOOT_COMPLETED,
             Intent.ACTION_USER_UNLOCKED -> {
@@ -23,51 +29,56 @@ class BootReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun restoreLock(context: Context) {
+    private fun applyBootPolicy(context: Context) {
+        if (!PolicyManager.isDeviceOwner(context) || context.customerId == -1) {
+            return
+        }
 
-        // This app must still be Device Owner.
+        runCatching {
+            PolicyManager.applyPermanentProtections(context)
+        }
+
+        if (context.isLocked) {
+            runCatching {
+                PolicyManager.applyLockRestrictions(context)
+            }
+        }
+    }
+
+    private fun restoreLock(context: Context) {
         if (!PolicyManager.isDeviceOwner(context)) {
             return
         }
 
         // Re-apply enrollment protections on every boot. These persist
-        // independently of the temporary lock restrictions.
-        try {
-            if (context.customerId != -1) {
+        // independently of temporary lock restrictions.
+        if (context.customerId != -1) {
+            runCatching {
                 PolicyManager.applyPermanentProtections(context)
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
 
-        // If admin already unlocked the device,
-        // do not restore the lock after reboot.
+        // If admin already unlocked the device, do not restore the lock.
         if (!context.isLocked) {
             return
         }
 
-        // Re-apply all temporary lock restrictions.
-        try {
+        runCatching {
             PolicyManager.applyLockRestrictions(context)
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
 
-        // Open the lock screen again.
         val lockIntent = Intent(
             context,
             LockActivity::class.java
         ).apply {
             flags =
                 Intent.FLAG_ACTIVITY_NEW_TASK or
-                        Intent.FLAG_ACTIVITY_CLEAR_TASK or
-                        Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    Intent.FLAG_ACTIVITY_CLEAR_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
 
-        try {
+        runCatching {
             context.startActivity(lockIntent)
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
     }
 }
