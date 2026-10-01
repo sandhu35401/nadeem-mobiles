@@ -29,6 +29,16 @@ class BootReceiver : BroadcastReceiver() {
             return
         }
 
+        // Re-apply enrollment protections on every boot. These persist
+        // independently of the temporary lock restrictions.
+        try {
+            if (context.customerId != -1) {
+                PolicyManager.applyPermanentProtections(context)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
         // If admin already unlocked the device,
         // do not restore the lock after reboot.
         if (!context.isLocked) {
