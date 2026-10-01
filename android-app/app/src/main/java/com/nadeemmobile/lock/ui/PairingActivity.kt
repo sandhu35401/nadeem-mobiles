@@ -82,7 +82,12 @@ class PairingActivity : AppCompatActivity() {
                 try {
                     val token = runCatching {
                         FirebaseMessaging.getInstance().token.await()
-                    }.getOrDefault("")
+                    }.getOrElse {
+                        "local-" + (android.provider.Settings.Secure.getString(
+                            contentResolver,
+                            android.provider.Settings.Secure.ANDROID_ID
+                        ) ?: "device")
+                    }
                     val result = withContext(Dispatchers.IO) {
                         ApiClient.pairDevice(this@PairingActivity, code, token)
                     }
