@@ -62,6 +62,14 @@ class LockActivity : AppCompatActivity() {
         if (!isLocked) {
             runCatching { stopLockTask() }
             finish()
+            return
+        }
+
+        // Re-apply kiosk restrictions if Android recreates the activity after
+        // screen-off, reboot, or task restoration.
+        if (PolicyManager.isDeviceOwner(this)) {
+            runCatching { PolicyManager.applyLockRestrictions(this) }
+            runCatching { startLockTask() }
         }
     }
 
