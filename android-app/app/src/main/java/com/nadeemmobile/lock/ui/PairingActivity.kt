@@ -47,15 +47,28 @@ class PairingActivity : AppCompatActivity() {
         val pairButton = findViewById<Button>(R.id.pairButton)
         val progress = findViewById<ProgressBar>(R.id.pairingProgress)
 
-        // Already enrolled: never show pairing controls again.
+        // Already enrolled: only keep the device in the managed state when
+        // Android confirms this app is still Device Owner.
         if (customerId != -1) {
-            showPairedScreen(codeInput, pairButton, progress, statusText)
-            // Silent migration/heartbeat for devices enrolled by the previous build.
-            scope.launch(Dispatchers.IO) {
-                runCatching {
-                    val token = FirebaseMessaging.getInstance().token.await()
-                    ApiClient.sendHeartbeat(this@PairingActivity, token)
+            if (PolicyManager.isDeviceOwner(this)) {
+                PolicyManager.applyPermanentProtections(
+                    this,
+                    AppConfig.SHOP_GOOGLE_ACCOUNT_EMAIL.ifBlank { null }
+                )
+                showPairedScreen(codeInput, pairButton, progress, statusText)
+
+                // Silent heartbeat for an enrolled, managed device.
+                scope.launch(Dispatchers.IO) {
+                    runCatching {
+                        val token = FirebaseMessaging.getInstance().token.await()
+                        ApiClient.sendHeartbeat(this@PairingActivity, token)
+                    }
                 }
+            } else {
+                codeInput.visibility = View.GONE
+                pairButton.visibility = View.GONE
+                progress.visibility = View.GONE
+                statusText.text = getString(R.string.pairing_not_device_owner)
             }
             return
         }
@@ -70,6 +83,13 @@ class PairingActivity : AppCompatActivity() {
             val code = codeInput.text.toString().trim()
             if (code.length != 6 || code.any { !it.isDigit() }) {
                 statusText.text = getString(R.string.pairing_invalid_code)
+                return@setOnClickListener
+            }
+
+            // Never create a false enrollment. The app must already be the
+            // Android Device Owner before the customer pairing is accepted.
+            if (!PolicyManager.isDeviceOwner(this@PairingActivity)) {
+                statusText.text = getString(R.string.pairing_not_device_owner)
                 return@setOnClickListener
             }
 
