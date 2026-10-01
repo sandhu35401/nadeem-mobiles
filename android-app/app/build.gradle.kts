@@ -16,7 +16,7 @@ android {
         versionName = "2.0"
 
         val apiBaseUrl = providers.gradleProperty("nadeemApiBaseUrl")
-            .orElse("https://nadeem-mobiles-api.user03174904469.workers.dev")
+            .orElse("https://YOUR-BACKEND-DOMAIN.example")
         buildConfigField("String", "NADEEM_API_BASE_URL", "\"${apiBaseUrl.get()}\"")
     }
 
