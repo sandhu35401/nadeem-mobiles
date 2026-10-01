@@ -80,7 +80,9 @@ class PairingActivity : AppCompatActivity() {
 
             scope.launch {
                 try {
-                    val token = FirebaseMessaging.getInstance().token.await()
+                    val token = runCatching {
+                        FirebaseMessaging.getInstance().token.await()
+                    }.getOrDefault("")
                     val result = withContext(Dispatchers.IO) {
                         ApiClient.pairDevice(this@PairingActivity, code, token)
                     }
