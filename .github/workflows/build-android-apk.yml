@@ -1,11 +1,6 @@
 name: Build and publish Android APK
 
-on:
-  push:
-    branches: [main]
-    paths-ignore:
-      - "docs/downloads/nadeem-mobile-lock.apk"
-  workflow_dispatch:
+on: [push, workflow_dispatch]
 
 permissions:
   contents: write
@@ -13,9 +8,10 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
@@ -23,10 +19,9 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Create local Android build configuration
+      - name: Prepare Android config
         shell: bash
         run: |
-          mkdir -p android-app/app
           cat > android-app/app/google-services.json <<'JSON'
 {
   "project_info": {
@@ -69,9 +64,16 @@ PROPS
 
       - name: Build release APK
         working-directory: android-app
-        run: ./gradlew --no-daemon assembleRelease
+        run: ./gradlew --no-daemon --stacktrace assembleRelease
 
-      - name: Publish APK to GitHub Pages
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nadeem-mobile-lock-release
+          path: android-app/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+
+      - name: Publish APK to Pages
         shell: bash
         run: |
           mkdir -p docs/downloads
@@ -81,4 +83,4 @@ PROPS
           git add docs/downloads/nadeem-mobile-lock.apk
           git diff --cached --quiet && exit 0
           git commit -m "chore: publish latest Android APK [skip ci]"
-          git push
+          git push origin HEAD:main
