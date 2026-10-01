@@ -12,8 +12,8 @@ android {
         applicationId = "com.nadeemmobile.lock"
         minSdk = 26
         targetSdk = 34
-        versionCode = 7
-        versionName = "2.5"
+        versionCode = 8
+        versionName = "2.6"
 
         val apiBaseUrl = providers.gradleProperty("nadeemApiBaseUrl")
             .orElse("https://YOUR-BACKEND-DOMAIN.example")
