@@ -1,0 +1,84 @@
+name: Build and publish Android APK
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "docs/downloads/nadeem-mobile-lock.apk"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Create local Android build configuration
+        shell: bash
+        run: |
+          mkdir -p android-app/app
+          cat > android-app/app/google-services.json <<'JSON'
+{
+  "project_info": {
+    "project_number": "64066783078",
+    "project_id": "nadeem-mobile",
+    "storage_bucket": "nadeem-mobile.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:64066783078:android:518664693e106f446c2aa7",
+        "android_client_info": {
+          "package_name": "com.nadeemmobile.lock"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCLOm3zfQkCG9advKPuwSPRqktOAUd_yXU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
+JSON
+          cat > android-app/gradle.properties <<'PROPS'
+org.gradle.jvmargs=-Xmx2048m
+android.useAndroidX=true
+kotlin.code.style=official
+kotlin.compiler.execution.strategy=in-process
+nadeemApiBaseUrl=https://nadeem-mobiles-api.user03174904469.workers.dev
+PROPS
+          chmod +x android-app/gradlew
+
+      - name: Build release APK
+        working-directory: android-app
+        run: ./gradlew --no-daemon assembleRelease
+
+      - name: Publish APK to GitHub Pages
+        shell: bash
+        run: |
+          mkdir -p docs/downloads
+          cp android-app/app/build/outputs/apk/release/app-release.apk docs/downloads/nadeem-mobile-lock.apk
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/downloads/nadeem-mobile-lock.apk
+          git diff --cached --quiet && exit 0
+          git commit -m "chore: publish latest Android APK [skip ci]"
+          git push

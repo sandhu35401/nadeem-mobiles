@@ -5,76 +5,38 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Nadeem Mobiles — Control Center</title>
   <meta name="description" content="Nadeem Mobiles control center for customers, payments, enrollments and managed devices.">
-  <link rel="stylesheet" href="styles.css?v=4.0">
+  <link rel="stylesheet" href="styles.css?v=4.1">
 </head>
 <body>
   <div id="toastHost" class="toast-host" aria-live="polite"></div>
-
   <section id="loginView" class="login-view">
     <div class="login-card">
-      <div class="brand-lockup">
-        <div class="brand-mark">NM</div>
-        <div>
-          <div class="eyebrow">NADEEM MOBILES</div>
-          <div class="brand-sub">Control Center</div>
-        </div>
-      </div>
+      <div class="brand-lockup"><div class="brand-mark">NM</div><div><div class="eyebrow">NADEEM MOBILES</div><div class="brand-sub">Control Center</div></div></div>
       <h1>Sign in</h1>
       <p class="muted">Manage customers, payments, phone enrollments and device controls.</p>
       <form id="loginForm" class="stack-form" novalidate>
-        <label>Username
-          <input id="loginUsername" name="username" autocomplete="username" required value="admin">
-        </label>
-        <label>Password
-          <input id="loginPassword" name="password" type="password" autocomplete="current-password" required>
-        </label>
+        <label>Username<input id="loginUsername" name="username" autocomplete="username" required value="admin"></label>
+        <label>Password<input id="loginPassword" name="password" type="password" autocomplete="current-password" required></label>
         <button class="btn primary full" type="submit">Sign in</button>
         <div id="loginError" class="form-error"></div>
       </form>
       <div class="login-foot">Secure session · Backend connection is encrypted</div>
     </div>
   </section>
-
   <div id="appView" class="app hidden">
     <aside class="sidebar">
-      <div class="side-brand">
-        <div class="brand-mark small">NM</div>
-        <div><strong>Nadeem Mobiles</strong><span>Control Center</span></div>
-      </div>
+      <div class="side-brand"><div class="brand-mark small">NM</div><div><strong>Nadeem Mobiles</strong><span>Control Center</span></div></div>
       <nav id="nav" class="nav" aria-label="Main navigation">
-        <button class="nav-item active" data-view="overview">Overview</button>
-        <button class="nav-item" data-view="customers">Customers</button>
-        <button class="nav-item" data-view="payments">Payments</button>
-        <button class="nav-item" data-view="devices">Devices</button>
-        <button class="nav-item" data-view="enrollments">Enrollments</button>
-        <button class="nav-item" data-view="activity">Activity</button>
-        <button class="nav-item" data-view="settings">Settings</button>
+        <button class="nav-item active" data-view="overview">Overview</button><button class="nav-item" data-view="customers">Customers</button><button class="nav-item" data-view="payments">Payments</button><button class="nav-item" data-view="devices">Devices</button><button class="nav-item" data-view="enrollments">Enrollments</button><button class="nav-item" data-view="activity">Activity</button><button class="nav-item" data-view="settings">Settings</button>
       </nav>
-      <div class="side-footer">
-        <span id="connectionDot" class="connection-dot"></span>
-        <span id="connectionLabel">Checking backend…</span>
-      </div>
+      <div class="side-footer"><span id="connectionDot" class="connection-dot"></span><span id="connectionLabel">Checking backend…</span></div>
     </aside>
-
     <main class="main-shell">
-      <header class="topbar">
-        <div>
-          <div class="eyebrow" id="pageEyebrow">Nadeem Mobiles</div>
-          <h2 id="pageTitle">Overview</h2>
-        </div>
-        <div class="top-actions">
-          <button id="refreshBtn" class="icon-btn" type="button" title="Refresh">↻</button>
-          <a class="btn ghost" href="download.html">Download Device Owner APK</a><button id="addCustomerBtn" class="btn primary" type="button">+ New customer</button>
-          <button id="logoutBtn" class="btn ghost" type="button">Sign out</button>
-        </div>
-      </header>
+      <header class="topbar"><div><div class="eyebrow" id="pageEyebrow">Nadeem Mobiles</div><h2 id="pageTitle">Overview</h2></div><div class="top-actions"><button id="refreshBtn" class="icon-btn" type="button" title="Refresh">↻</button><a class="btn ghost" href="download.html">Download App + Device Owner APK</a><button id="addCustomerBtn" class="btn primary" type="button">+ New customer</button><button id="logoutBtn" class="btn ghost" type="button">Sign out</button></div></header>
       <section id="content" class="content"></section>
     </main>
   </div>
-
   <div id="modalHost"></div>
-
-  <script src="config.js?v=4.0"></script>
-  <script src="app.js?v=4.0"></script>
+  <script src="config.js?v=4.1"></script><script src="app.js?v=4.1"></script>
 </body>
 </html>
