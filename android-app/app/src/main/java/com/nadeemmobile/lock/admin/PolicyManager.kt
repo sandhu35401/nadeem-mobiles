@@ -32,6 +32,9 @@ object PolicyManager {
         try {
             // Enrolled devices must not be normally uninstallable.
             manager.setUninstallBlocked(admin, context.packageName, true)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                manager.addUserRestriction(admin, UserManager.DISALLOW_UNINSTALL_APPS)
+            }
 
             // Enrolled devices must not expose the normal factory-reset path.
             manager.addUserRestriction(admin, UserManager.DISALLOW_FACTORY_RESET)
@@ -148,6 +151,9 @@ object PolicyManager {
 
             // Release the enrollment-only factory-reset restriction.
             manager.clearUserRestriction(admin, UserManager.DISALLOW_FACTORY_RESET)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                manager.clearUserRestriction(admin, UserManager.DISALLOW_UNINSTALL_APPS)
+            }
 
             // Allow the package to be removed after Device Owner is gone.
             manager.setUninstallBlocked(admin, context.packageName, false)
