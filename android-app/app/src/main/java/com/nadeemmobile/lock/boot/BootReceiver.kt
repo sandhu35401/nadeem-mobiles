@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import com.nadeemmobile.lock.admin.PolicyManager
 import com.nadeemmobile.lock.store.Prefs.isLocked
+import com.nadeemmobile.lock.store.Prefs.customerId
 import com.nadeemmobile.lock.ui.LockActivity
 
 class BootReceiver : BroadcastReceiver() {
