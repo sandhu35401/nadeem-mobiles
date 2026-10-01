@@ -164,11 +164,11 @@ async function handle(request, env) {
     const b = await body(request);
     const code = String(b.pairingCode || "");
     const fcmToken = String(b.fcmToken || "");
-    if (!/^\d{6}$/.test(code) || !fcmToken) return json({ error: "Enter the valid 6-digit pairing code." }, 400);
+    if (!/^\d{6}$/.test(code)) return json({ error: "Enter the valid 6-digit pairing code." }, 400);
     const c = await env.DB.prepare("SELECT * FROM customers WHERE pairing_code=? LIMIT 1").bind(code).first();
     if (!c) return json({ error: "That pairing code is invalid." }, 404);
     if (c.status === "released") return json({ error: "This enrollment has already been released." }, 410);
-    if (c.fcm_token) return json({ error: "This pairing code has already been used." }, 409);
+    if (c.fcm_token || c.device_secret) return json({ error: "This pairing code has already been used." }, 409);
     const secret = token();
     await env.DB.prepare("UPDATE customers SET fcm_token=?,device_secret=?,device_model=?,status='unlocked',last_seen=datetime('now'),release_token=NULL,released_at=NULL WHERE id=?")
       .bind(fcmToken, secret, String(b.deviceModel || ""), c.id).run();
