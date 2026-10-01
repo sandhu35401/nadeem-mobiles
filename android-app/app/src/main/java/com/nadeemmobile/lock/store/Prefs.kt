@@ -3,18 +3,26 @@ package com.nadeemmobile.lock.store
 import android.content.Context
 
 /**
- * Local device state. The enrollment state and lock state are deliberately
- * persisted so a reboot cannot bypass the management policy.
+ * Local device state.
+ *
+ * Enrollment and lock flags are stored in device-protected storage so Android
+ * can read them during Direct Boot after a reboot, before the user unlocks.
+ * Other display/contact data stays in normal credential-protected storage.
  */
 object Prefs {
     private const val FILE = "nadeem_lock_prefs"
+    private const val DEVICE_FILE = "nadeem_lock_device_prefs"
 
     private fun prefs(context: Context) =
         context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
 
+    private fun devicePrefs(context: Context) =
+        context.createDeviceProtectedStorageContext()
+            .getSharedPreferences(DEVICE_FILE, Context.MODE_PRIVATE)
+
     var Context.customerId: Int
-        get() = prefs(this).getInt("customer_id", -1)
-        set(v) = prefs(this).edit().putInt("customer_id", v).apply()
+        get() = devicePrefs(this).getInt("customer_id", -1)
+        set(v) = devicePrefs(this).edit().putInt("customer_id", v).apply()
 
     val Context.isPaired: Boolean
         get() = customerId != -1
@@ -24,8 +32,8 @@ object Prefs {
         set(v) = prefs(this).edit().putString("device_secret", v).apply()
 
     var Context.isLocked: Boolean
-        get() = prefs(this).getBoolean("is_locked", false)
-        set(v) = prefs(this).edit().putBoolean("is_locked", v).apply()
+        get() = devicePrefs(this).getBoolean("is_locked", false)
+        set(v) = devicePrefs(this).edit().putBoolean("is_locked", v).apply()
 
     var Context.lockMessage: String
         get() = prefs(this).getString("lock_message", "") ?: ""
@@ -41,12 +49,15 @@ object Prefs {
 
     fun clearEnrollment(context: Context) {
         prefs(context).edit()
-            .remove("customer_id")
             .remove("device_secret")
-            .remove("is_locked")
             .remove("lock_message")
             .remove("shop_name")
             .remove("shop_phone")
+            .apply()
+
+        devicePrefs(context).edit()
+            .remove("customer_id")
+            .remove("is_locked")
             .apply()
     }
 }
