@@ -60,12 +60,9 @@ class PairingActivity : AppCompatActivity() {
             return
         }
 
-        if (!PolicyManager.isDeviceOwner(this)) {
-            statusText.text = getString(R.string.pairing_not_device_owner)
-            pairButton.isEnabled = false
-            return
-        }
-
+        // Pairing is allowed before Device Owner provisioning so the phone can
+        // register with the shop. Device-management protections are applied
+        // automatically as soon as Device Owner is provisioned.
         codeInput.requestFocus()
         window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE)
 
